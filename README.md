@@ -35,7 +35,7 @@
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/your-username/moodijournal.git
+   git clone https://github.com/SineadCoding/moodijournal.git
    cd moodijournal
    ```
 
