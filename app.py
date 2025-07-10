@@ -7,12 +7,7 @@ import random
 from pandas.errors import EmptyDataError
 from PIL import Image
 import os
-import nltk
 
-nltk.download('punkt')
-nltk.download('averaged_perceptron_tagger')
-
-user_email = "guest@example.com"
 
 QUOTES = {
     "great😆": [
@@ -70,7 +65,7 @@ def analyze_mood(text):
     return mood, polarity
 
 
-def log_entry(entry: str, mood: str, polarity: float) -> None:
+def log_entry(entry: str, mood: str, polarity: float, filename: str) -> None:
     filename = f"journal_{user_email}.csv"
     columns = ["timestamp", "entry", "mood", "polarity"]
 
@@ -86,6 +81,7 @@ def log_entry(entry: str, mood: str, polarity: float) -> None:
         "polarity": polarity
     }])
     df = pd.concat([df, new_row], ignore_index=True)
+
     df.to_csv(filename, index=False)
 
 
@@ -105,55 +101,60 @@ def clear_user_data():
 
 
 
-image_path = os.path.join("images", "logo.png")
-if os.path.exists(image_path):
-    st.image(image_path, width=200)
 
-st.title("MoodiJournal📓")
-st.write("Welcome to MoodiJournal, a safe space to write about your day or your feelings throughout the day and assess your mood from a neutral perspective. "
-         "Log your mood and content from your journal for you to reflect on and receive a special message based off of your mood to either support or enhance your day.")
-st.write("Happy Journalling!!!🌸")
-st.subheader("Write about your day and get insights on your mood.✍🏻")
+if not st.user.is_logged_in:
+    st.image("images/logo.png", width=200)
+    st.title("Welcome to MoodiJournal, the Smart Mood Journal.📓")
+    st.subheader("Let's get you signed in!")
+    if st.button("Sign in With Google"):
+        st.login("google")
 
-def clear_entry():
-    st.session_state["entry"] = ""
 
-entry = st.text_area("How are you feeling today?🙂", height=200, key="entry")
-
-col1, col2 = st.columns(2)
-with col1:
-    if st.button("Analyze My Mood"):
-        if entry.strip():
-            mood, polarity = analyze_mood(entry)
-            log_entry(entry, mood, polarity)
-            st.success(f"Detected mood: **{mood.capitalize()}** (Score: {polarity:.2f})")
-            st.info(random.choice(QUOTES[mood]))
-        else:
-            st.warning("Please write something first.")
-with col2:
-    st.button("Clear text", on_click=clear_entry)
-
-df = load_log()
-if not df.empty and 'timestamp' in df.columns:
-    st.subheader("Let's have a look at your mood over time📈")
-    df['timestamp'] = pd.to_datetime(df['timestamp'])
-    plt.figure(facecolor="slategray")
-    ax = plt.gca()
-    ax.set_facecolor("slategray")
-    plt.plot(df['timestamp'], df['polarity'], marker='o', color='black')
-    plt.axhline(0, color='gray', linestyle='--')
-    plt.title("Mood Polarity Trend")
-    plt.xticks(rotation=45)
-    plt.ylabel("Polarity")
-    plt.tight_layout()
-    st.pyplot(plt)
 else:
-    st.info("No mood entries yet. Start journaling!")
+    if st.button("Logout"):
+        st.logout()
+    user_email = st.user.email
+    st.image("images/logo.png", width=200)
+    st.title("MoodiJournal📓")
+    st.write("Welcome to MoodiJournal, a safe space to write about your day or your feelings throughout the day and assess your mood from a nuetral perpective, "
+                 " log your mood and content from your journal for you to reflect on and recieve a special message based off of your mood to either support or enhance you day.")
+    st.write("Happy Journalling!!!🌸")
+    st.subheader("Write about your day and get insights on your mood.✍🏻")
 
-if st.button("🛑 Delete all journal entries", key="clear_data"):
-    clear_user_data()
-    st.rerun()
-    st.success("Your journal data has been cleared for today!")
+
+    def clear_entry():
+        st.session_state["entry"] = ""
+    entry = st.text_area("How are you feeling today?🙂", height=200, key="entry")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("Analyze My Mood"):
+            if entry.strip():
+                mood, polarity = analyze_mood(entry)
+                log_entry(entry, mood, polarity, user_email)
+                st.success(f"Detected mood: **{mood.capitalize()}** (Score: {polarity:.2f})")
+                st.info(random.choice(QUOTES[mood]))
+            else:
+                st.warning("Please write something first.")
+    with col2:
+        st.button("Clear text", on_click=clear_entry)
+
+    df = load_log()
+    if not df.empty and 'timestamp' in df.columns:
+        st.subheader("Let's have a look at your mood over time📈")
+        df['timestamp'] = pd.to_datetime(df['timestamp'])
+        plt.figure(facecolor="slategray")
+        ax = plt.gca()
+        ax.set_facecolor("slategray")
+        plt.plot(df['timestamp'], df['polarity'], marker='o', color='black')
+        plt.axhline(0, color='gray', linestyle='--')
+        plt.title("Mood Polarity Trend")
+        plt.xticks(rotation=45)
+        plt.ylabel("Polarity")
+        plt.tight_layout()
+        st.pyplot(plt)
+    else:
+        st.info("No mood entries yet. Start journaling!")
+
     if st.button("🛑 Delete all journal entries", key="clear_data"):
         clear_user_data()
         st.rerun()
