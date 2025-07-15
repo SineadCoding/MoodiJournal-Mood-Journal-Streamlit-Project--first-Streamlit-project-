@@ -1,6 +1,6 @@
 streamlit==1.36.0
 textblob==0.17.1
-pandas==2.0.3
+pandas==1.4.4
 matplotlib==3.8.4
 pillow==9.5.0   
 nltk  
