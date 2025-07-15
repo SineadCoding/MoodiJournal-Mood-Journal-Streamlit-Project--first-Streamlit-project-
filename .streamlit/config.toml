@@ -1,0 +1,5 @@
+[compatibility]
+cloudV2 = true
+
+[runner]
+python_version = "3.10"
